@@ -5,6 +5,44 @@
 #include "gwidi/GwidiGuiData.h"
 #include "core/array.h"
 
+class Gwidi_Note : public Reference {
+  GDCLASS(Gwidi_Note, Reference);
+protected:
+    static void _bind_methods();
+
+public:
+    Array getLetters();
+    int measure();
+    int octave();
+    int time();
+    String key();
+
+    Gwidi_Note();
+    ~Gwidi_Note();
+    void init(gwidi::data::gui::Note* note);
+
+private:
+  gwidi::data::gui::Note* m_note;
+};
+
+class Gwidi_Octave : public Reference {
+  GDCLASS(Gwidi_Octave, Reference);
+protected:
+    static void _bind_methods();
+
+public:
+    Dictionary getTimes();
+    int num();
+    int measure();
+
+    Gwidi_Octave();
+    ~Gwidi_Octave();
+    void init(gwidi::data::gui::Octave* octave);
+
+private:
+  gwidi::data::gui::Octave* m_octave;
+};
+
 class Gwidi_Measure : public Reference {
   GDCLASS(Gwidi_Measure, Reference);
 protected:

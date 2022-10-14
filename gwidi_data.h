@@ -17,6 +17,9 @@ public:
     int time();
     String key();
 
+    void toggle();
+    bool activated();
+
     Gwidi_Note();
     ~Gwidi_Note();
     void init(gwidi::data::gui::Note* note);
@@ -69,13 +72,13 @@ protected:
 
 public:
     void addMeasure();
-    int measureCount();
-    Ref<Gwidi_Measure> measureAt(int index);
+    Array getMeasures();
 
     Gwidi_Data();
+    ~Gwidi_Data();
 
 private:
-  gwidi::data::gui::GwidiGuiData m_data;
+  gwidi::data::gui::GwidiGuiData* m_data{nullptr};
 };
 
 #endif // GODOT_GWIDI_DATA_H

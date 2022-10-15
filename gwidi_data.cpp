@@ -42,8 +42,9 @@ String Gwidi_Note::key() {
 }
 
 void Gwidi_Note::toggle() {
-  m_note->activated = !(m_note->activated);
+  m_note->activated = !m_note->activated;
 }
+
 bool Gwidi_Note::activated() {
   return m_note->activated;
 }
@@ -54,7 +55,6 @@ void Gwidi_Note::_bind_methods() {
   ClassDB::bind_method(D_METHOD("octave"), &Gwidi_Note::octave);
   ClassDB::bind_method(D_METHOD("time"), &Gwidi_Note::time);
   ClassDB::bind_method(D_METHOD("key"), &Gwidi_Note::key);
-  ClassDB::bind_method(D_METHOD("toggle"), &Gwidi_Note::toggle);
   ClassDB::bind_method(D_METHOD("activated"), &Gwidi_Note::activated);
 }
 
@@ -161,7 +161,13 @@ Array Gwidi_Data::getMeasures() {
   return ret;
 }
 
+void Gwidi_Data::toggleNote(Ref<Gwidi_Note> note) {
+  // note->toggle(); Don't toggle, the below method already does that
+  m_data->toggleNote(note->m_note);
+}
+
 void Gwidi_Data::_bind_methods() {
   ClassDB::bind_method(D_METHOD("addMeasure"), &Gwidi_Data::addMeasure);
   ClassDB::bind_method(D_METHOD("getMeasures"), &Gwidi_Data::getMeasures);
+  ClassDB::bind_method(D_METHOD("toggleNote"), &Gwidi_Data::toggleNote);
 }

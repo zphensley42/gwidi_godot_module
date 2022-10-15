@@ -25,6 +25,7 @@ public:
     void init(gwidi::data::gui::Note* note);
 
 private:
+  friend class Gwidi_Data;
   gwidi::data::gui::Note* m_note;
 };
 
@@ -73,6 +74,7 @@ protected:
 public:
     void addMeasure();
     Array getMeasures();
+    void toggleNote(Ref<Gwidi_Note> note);
 
     Gwidi_Data();
     ~Gwidi_Data();

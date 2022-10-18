@@ -3,6 +3,7 @@
 
 #include "core/reference.h"
 #include "gwidi/GwidiGuiData.h"
+#include "gwidi/gwidi_midi_parser.h"
 #include "core/array.h"
 
 class Gwidi_Note : public Reference {
@@ -25,7 +26,7 @@ public:
     void init(gwidi::data::gui::Note* note);
 
 private:
-  friend class Gwidi_Data;
+  friend class Gwidi_Gui_Data;
   gwidi::data::gui::Note* m_note;
 };
 
@@ -65,22 +66,36 @@ private:
 };
 
 
-class Gwidi_Data : public Reference {
-    GDCLASS(Gwidi_Data, Reference);
+class Gwidi_Gui_Data : public Reference {
+    GDCLASS(Gwidi_Gui_Data, Reference);
 
 protected:
     static void _bind_methods();
 
 public:
+
     void addMeasure();
     Array getMeasures();
     void toggleNote(Ref<Gwidi_Note> note);
 
-    Gwidi_Data();
-    ~Gwidi_Data();
+    Gwidi_Gui_Data();
+    ~Gwidi_Gui_Data();
 
 private:
   gwidi::data::gui::GwidiGuiData* m_data{nullptr};
+};
+
+class Gwidi_Midi_Parser : public Reference {
+    GDCLASS(Gwidi_Midi_Parser, Reference);
+
+protected:
+    static void _bind_methods();
+
+public:
+    Array getTrackMetaMap(String filename);
+
+    Gwidi_Midi_Parser();
+    ~Gwidi_Midi_Parser();
 };
 
 #endif // GODOT_GWIDI_DATA_H

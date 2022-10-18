@@ -137,20 +137,20 @@ void Gwidi_Measure::_bind_methods() {
 
 
 
-Gwidi_Data::Gwidi_Data() {
+Gwidi_Gui_Data::Gwidi_Gui_Data() {
   m_data = new gwidi::data::gui::GwidiGuiData(gwidi::data::gui::Instrument::HARP);
 }
 
-Gwidi_Data::~Gwidi_Data() {
+Gwidi_Gui_Data::~Gwidi_Gui_Data() {
   delete m_data;
   m_data = nullptr;
 }
 
-void Gwidi_Data::addMeasure() {
+void Gwidi_Gui_Data::addMeasure() {
   m_data->addMeasure();
 }
 
-Array Gwidi_Data::getMeasures() {
+Array Gwidi_Gui_Data::getMeasures() {
   Array ret{};
   for(auto &m : m_data->getMeasures()) {
     Ref<Gwidi_Measure> measure;
@@ -161,13 +161,46 @@ Array Gwidi_Data::getMeasures() {
   return ret;
 }
 
-void Gwidi_Data::toggleNote(Ref<Gwidi_Note> note) {
+void Gwidi_Gui_Data::toggleNote(Ref<Gwidi_Note> note) {
   // note->toggle(); Don't toggle, the below method already does that
   m_data->toggleNote(note->m_note);
 }
 
-void Gwidi_Data::_bind_methods() {
-  ClassDB::bind_method(D_METHOD("addMeasure"), &Gwidi_Data::addMeasure);
-  ClassDB::bind_method(D_METHOD("getMeasures"), &Gwidi_Data::getMeasures);
-  ClassDB::bind_method(D_METHOD("toggleNote"), &Gwidi_Data::toggleNote);
+void Gwidi_Gui_Data::_bind_methods() {
+  ClassDB::bind_method(D_METHOD("addMeasure"), &Gwidi_Gui_Data::addMeasure);
+  ClassDB::bind_method(D_METHOD("getMeasures"), &Gwidi_Gui_Data::getMeasures);
+  ClassDB::bind_method(D_METHOD("toggleNote"), &Gwidi_Gui_Data::toggleNote);
+}
+
+
+Gwidi_Midi_Parser::Gwidi_Midi_Parser() {
+
+}
+
+Gwidi_Midi_Parser::~Gwidi_Midi_Parser() {
+
+}
+
+Array Gwidi_Midi_Parser::getTrackMetaMap(String filename) {
+
+  std::wstring filename_wstr = filename.c_str();
+  std::string filename_str( filename_wstr.begin(), filename_wstr.end() );
+
+  auto trackMeta = gwidi::midi::GwidiMidiParser::getInstance().getTrackMetaMap(filename_str.c_str());
+  Array ret{};
+
+  for(auto &entry : trackMeta) {
+    Dictionary trackInfo{};
+    trackInfo["name"] = String(entry.second.name.c_str());
+    trackInfo["instrument"] = String(entry.second.instrument.c_str());
+    trackInfo["num_notes"] = entry.second.num_notes;
+    trackInfo["tempo"] = entry.second.tempo;
+    trackInfo["duration"] = entry.second.duration;
+    ret.append(trackInfo);
+  }
+  return ret;
+ }
+
+void Gwidi_Midi_Parser::_bind_methods() {
+  ClassDB::bind_method(D_METHOD("getTrackMetaMap"), &Gwidi_Midi_Parser::getTrackMetaMap);
 }

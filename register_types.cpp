@@ -6,6 +6,7 @@
 #include "gwidi_data.h"
 
 void register_gwidi_data_types() {
+    ClassDB::register_class<Gwidi_Gui_Playback>();
     ClassDB::register_class<Gwidi_Midi_Parser>();
     ClassDB::register_class<Gwidi_Gui_Data>();
     ClassDB::register_class<Gwidi_Measure>();

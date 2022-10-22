@@ -166,6 +166,11 @@ void Gwidi_Gui_Data::toggleNote(Ref<Gwidi_Note> note) {
   m_data->toggleNote(note->m_note);
 }
 
+void Gwidi_Gui_Data::assignData(gwidi::data::gui::GwidiGuiData* data) {
+  delete m_data;
+  m_data = data;
+}
+
 void Gwidi_Gui_Data::_bind_methods() {
   ClassDB::bind_method(D_METHOD("addMeasure"), &Gwidi_Gui_Data::addMeasure);
   ClassDB::bind_method(D_METHOD("getMeasures"), &Gwidi_Gui_Data::getMeasures);
@@ -201,6 +206,120 @@ Array Gwidi_Midi_Parser::getTrackMetaMap(String filename) {
   return ret;
  }
 
+ Ref<Gwidi_Gui_Data> Gwidi_Midi_Parser::importMidi(String filename, int track) {
+   std::wstring filename_wstr = filename.c_str();
+   std::string filename_str( filename_wstr.begin(), filename_wstr.end() );
+
+
+   gwidi::midi::MidiParseOptions options {
+     gwidi::midi::Instrument::HARP,
+     track
+   };
+
+    auto midiData = gwidi::midi::GwidiMidiParser::getInstance().readFile(filename_str.c_str(), options);
+    auto guiData = gwidi::data::GwidiDataConverter::getInstance().midiToGui(midiData);
+
+    Ref<Gwidi_Gui_Data> retGuiData;
+    retGuiData.instance();
+    retGuiData->assignData(guiData); // This method needs to delete the old data it may have first
+
+    return retGuiData;
+ }
+
 void Gwidi_Midi_Parser::_bind_methods() {
   ClassDB::bind_method(D_METHOD("getTrackMetaMap"), &Gwidi_Midi_Parser::getTrackMetaMap);
+  ClassDB::bind_method(D_METHOD("importMidi"), &Gwidi_Midi_Parser::importMidi);
+}
+
+
+
+
+void Gwidi_Gui_Playback::play() {
+  if(m_playback) {
+    m_playback->play();
+  }
+}
+
+void Gwidi_Gui_Playback::pause() {
+  if(m_playback) {
+    m_playback->pause();
+  }
+}
+
+void Gwidi_Gui_Playback::stop() {
+  if(m_playback) {
+    m_playback->stop();
+  }
+}
+
+
+bool Gwidi_Gui_Playback::isPlaying() {
+  if(m_playback) {
+    return m_playback->isPlaying();
+  }
+  return false;
+}
+bool Gwidi_Gui_Playback::isPaused() {
+  if(m_playback) {
+    return m_playback->isPaused();
+  }
+  return false;
+}
+bool Gwidi_Gui_Playback::isStopped() {
+  if(m_playback) {
+    return m_playback->isStopped();
+  }
+  return true;
+}
+
+void Gwidi_Gui_Playback::assignTickCallbackFn(Ref<FuncRef> cb) {
+  m_tickCbFn = cb;
+  if(m_playback) {
+    m_playback->setTickCb([this](double curTime) {
+      Variant v(curTime);
+      const Variant *args[1] = {&v};
+      Variant::CallError err;
+      m_tickCbFn->call_func(args, 1, err);
+    });
+  }
+}
+
+void Gwidi_Gui_Playback::assignInstrument(String instrument) {
+  std::wstring instrument_wstr = instrument.c_str();
+  std::string instrument_str( instrument_wstr.begin(), instrument_wstr.end() );
+
+  m_instrument = instrument_str;
+}
+
+void Gwidi_Gui_Playback::assignData(Ref<Gwidi_Gui_Data> data, int octaveBehavior) {
+  if(!m_playback) {
+    m_data = data;
+    m_playback = new gwidi::playback::GwidiPlayback(m_instrument);
+    auto options = gwidi::tick::GwidiTickOptions {
+      static_cast<gwidi::tick::GwidiTickOptions::ActionOctaveBehavior>(octaveBehavior)
+    };
+    m_playback->assignData(m_data->m_data, options);
+  }
+}
+
+Gwidi_Gui_Playback::Gwidi_Gui_Playback() {}
+Gwidi_Gui_Playback::~Gwidi_Gui_Playback() {
+  if(m_playback) {
+    m_playback->setTickCb([](double curTime){});
+    delete m_playback;
+    m_playback = nullptr;
+  }
+}
+
+
+void Gwidi_Gui_Playback::_bind_methods() {
+  ClassDB::bind_method(D_METHOD("play"), &Gwidi_Gui_Playback::play);
+  ClassDB::bind_method(D_METHOD("pause"), &Gwidi_Gui_Playback::pause);
+  ClassDB::bind_method(D_METHOD("stop"), &Gwidi_Gui_Playback::stop);
+  ClassDB::bind_method(D_METHOD("isPlaying"), &Gwidi_Gui_Playback::isPlaying);
+  ClassDB::bind_method(D_METHOD("isPaused"), &Gwidi_Gui_Playback::isPaused);
+  ClassDB::bind_method(D_METHOD("isStopped"), &Gwidi_Gui_Playback::isStopped);
+  ClassDB::bind_method(D_METHOD("assignTickCallbackFn"), &Gwidi_Gui_Playback::assignTickCallbackFn);
+  ClassDB::bind_method(D_METHOD("assignInstrument"), &Gwidi_Gui_Playback::assignInstrument);
+  ClassDB::bind_method(D_METHOD("assignData"), &Gwidi_Gui_Playback::assignData);
 }

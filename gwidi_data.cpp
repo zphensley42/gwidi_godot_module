@@ -299,10 +299,13 @@ void Gwidi_Gui_Playback::assignPlayCallbackFn(Ref<FuncRef> cb) {
       print_line("play cb called");
       Array notes{};
       for(auto &n : action->notes) {
-        Dictionary note{};
-        note["octave"] = n->octave;
-        note["key"] = String(n->key.c_str());
-        notes.append(note);
+        if(n->octave == action->chosen_octave) {
+          Dictionary note{};
+          note["octave"] = n->octave;
+          note["key"] = String(n->key.c_str());
+          note["start_offset"] = n->start_offset;
+          notes.append(note);
+        }
       }
       Variant v(notes);
       const Variant *args[1] = {&v};
@@ -329,6 +332,37 @@ void Gwidi_Gui_Playback::assignPlayCallbackFn(Ref<FuncRef> cb) {
         print_line("error reason: " + reason);
       }
 
+    });
+  }
+}
+
+void Gwidi_Gui_Playback::assignPlayEndedFn(Ref<FuncRef> cb) {
+  m_playEndedFn = cb;
+  if(m_playback) {
+    m_playback->setPlayEndedCb([this]() {
+      const Variant *args[] = {};
+      Variant::CallError err;
+      m_playEndedFn->call_func(args, 0, err);
+    if (err.error != Variant::CallError::CALL_OK) {
+        String reason;
+        switch (err.error) {
+            case Variant::CallError::CALL_ERROR_INVALID_ARGUMENT: {
+                reason = "Invalid Argument #" + itos(err.argument);
+            } break;
+            case Variant::CallError::CALL_ERROR_TOO_MANY_ARGUMENTS: {
+                reason = "Too Many Arguments";
+            } break;
+            case Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS: {
+                reason = "Too Few Arguments";
+            } break;
+            case Variant::CallError::CALL_ERROR_INVALID_METHOD: {
+                reason = "Method Not Found";
+            } break;
+            default: {
+            }
+        }
+        print_line("error reason: " + reason);
+    }
     });
   }
 }
@@ -377,6 +411,7 @@ void Gwidi_Gui_Playback::_bind_methods() {
   ClassDB::bind_method(D_METHOD("isStopped"), &Gwidi_Gui_Playback::isStopped);
   ClassDB::bind_method(D_METHOD("assignTickCallbackFn"), &Gwidi_Gui_Playback::assignTickCallbackFn);
   ClassDB::bind_method(D_METHOD("assignPlayCallbackFn"), &Gwidi_Gui_Playback::assignPlayCallbackFn);
+  ClassDB::bind_method(D_METHOD("assignPlayEndedFn"), &Gwidi_Gui_Playback::assignPlayEndedFn);
   ClassDB::bind_method(D_METHOD("assignInstrument"), &Gwidi_Gui_Playback::assignInstrument);
   ClassDB::bind_method(D_METHOD("assignData"), &Gwidi_Gui_Playback::assignData);
   ClassDB::bind_method(D_METHOD("setRealInput"), &Gwidi_Gui_Playback::setRealInput);

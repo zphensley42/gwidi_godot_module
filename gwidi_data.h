@@ -124,6 +124,7 @@ public:
     bool isStopped();
 
     void assignTickCallbackFn(Ref<FuncRef> cb);
+    void assignPlayCallbackFn(Ref<FuncRef> cb);
 
     void assignInstrument(String instrument);
     void assignData(Ref<Gwidi_Gui_Data> data, int octaveBehavior);
@@ -134,6 +135,7 @@ public:
 private:
   std::string m_instrument;
   Ref<FuncRef> m_tickCbFn{nullptr};
+  Ref<FuncRef> m_playCbFn{nullptr};
   Ref<Gwidi_Gui_Data> m_data{nullptr};
   gwidi::playback::GwidiPlayback* m_playback{nullptr};
 };

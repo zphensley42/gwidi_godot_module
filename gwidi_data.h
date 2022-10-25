@@ -7,6 +7,7 @@
 #include "gwidi/gwidi_midi_parser.h"
 #include "gwidi/GwidiDataConverter.h"
 #include "gwidi/GwidiPlayback.h"
+#include "gwidi/GwidiOptions2.h"
 #include "core/array.h"
 
 class Gwidi_Note : public Reference {
@@ -80,6 +81,7 @@ public:
     void addMeasure();
     Array getMeasures();
     void toggleNote(Ref<Gwidi_Note> note);
+    double tempo();
 
     Gwidi_Gui_Data();
     ~Gwidi_Gui_Data();
@@ -112,6 +114,7 @@ protected:
     static void _bind_methods();
 
 public:
+    void setRealInput(bool real);
     void play();
     void pause();
     void stop();
@@ -133,6 +136,16 @@ private:
   Ref<FuncRef> m_tickCbFn{nullptr};
   Ref<Gwidi_Gui_Data> m_data{nullptr};
   gwidi::playback::GwidiPlayback* m_playback{nullptr};
+};
+
+class Gwidi_Options : public Reference {
+  GDCLASS(Gwidi_Options, Reference);
+protected:
+    static void _bind_methods();
+
+  public:
+    int timesPerMeasure();
+    double tempo();
 };
 
 #endif // GODOT_GWIDI_DATA_H

@@ -171,10 +171,18 @@ void Gwidi_Gui_Data::assignData(gwidi::data::gui::GwidiGuiData* data) {
   m_data = data;
 }
 
+double Gwidi_Gui_Data::tempo() {
+  if(m_data) {
+    return m_data->getTempo();
+  }
+  return 0.0;
+}
+
 void Gwidi_Gui_Data::_bind_methods() {
   ClassDB::bind_method(D_METHOD("addMeasure"), &Gwidi_Gui_Data::addMeasure);
   ClassDB::bind_method(D_METHOD("getMeasures"), &Gwidi_Gui_Data::getMeasures);
   ClassDB::bind_method(D_METHOD("toggleNote"), &Gwidi_Gui_Data::toggleNote);
+  ClassDB::bind_method(D_METHOD("tempo"), &Gwidi_Gui_Data::tempo);
 }
 
 
@@ -311,6 +319,12 @@ Gwidi_Gui_Playback::~Gwidi_Gui_Playback() {
   }
 }
 
+void Gwidi_Gui_Playback::setRealInput(bool real) {
+  if(m_playback) {
+    m_playback->setRealInput(real);
+  }
+}
+
 
 void Gwidi_Gui_Playback::_bind_methods() {
   ClassDB::bind_method(D_METHOD("play"), &Gwidi_Gui_Playback::play);
@@ -322,4 +336,21 @@ void Gwidi_Gui_Playback::_bind_methods() {
   ClassDB::bind_method(D_METHOD("assignTickCallbackFn"), &Gwidi_Gui_Playback::assignTickCallbackFn);
   ClassDB::bind_method(D_METHOD("assignInstrument"), &Gwidi_Gui_Playback::assignInstrument);
   ClassDB::bind_method(D_METHOD("assignData"), &Gwidi_Gui_Playback::assignData);
+  ClassDB::bind_method(D_METHOD("setRealInput"), &Gwidi_Gui_Playback::setRealInput);
+}
+
+
+
+void Gwidi_Options::_bind_methods() {
+  ClassDB::bind_method(D_METHOD("timesPerMeasure"), &Gwidi_Options::timesPerMeasure);
+  ClassDB::bind_method(D_METHOD("tempo"), &Gwidi_Options::tempo);
+}
+
+
+int Gwidi_Options::timesPerMeasure() {
+  return gwidi::options2::GwidiOptions2::getInstance().notesPerMeasure();
+}
+
+double Gwidi_Options::tempo() {
+    return gwidi::options2::GwidiOptions2::getInstance().tempo();
 }

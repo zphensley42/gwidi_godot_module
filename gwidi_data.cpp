@@ -299,11 +299,11 @@ void Gwidi_Gui_Playback::assignPlayCallbackFn(Ref<FuncRef> cb) {
       print_line("play cb called");
       Array notes{};
       for(auto &n : action->notes) {
-        if(n->octave == action->chosen_octave) {
+        if(n.octave == action->chosen_octave) {
           Dictionary note{};
-          note["octave"] = n->octave;
-          note["key"] = String(n->key.c_str());
-          note["start_offset"] = n->start_offset;
+          note["octave"] = n.octave;
+          note["key"] = String(n.key.c_str());
+          note["start_offset"] = n.start_offset;
           notes.append(note);
         }
       }

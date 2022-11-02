@@ -8,7 +8,9 @@
 #include "gwidi/GwidiDataConverter.h"
 #include "gwidi/GwidiPlayback.h"
 #include "gwidi/GwidiOptions2.h"
+#include "gwidi/gwidi_hotkey.h"
 #include "core/array.h"
+#include <string_view>
 
 class Gwidi_Note : public Reference {
   GDCLASS(Gwidi_Note, Reference);
@@ -148,8 +150,36 @@ protected:
     static void _bind_methods();
 
   public:
+  	Dictionary hotkeyOptions();	// Used to display options
+
+	// User inputs hotkeys and presses okay to send this request
+	void assignHotkey(String name, Array keys);
+
     int timesPerMeasure();
     double tempo();
 };
+
+class Gwidi_HotKey : public Reference {
+	GDCLASS(Gwidi_HotKey, Reference);
+protected:
+	static void _bind_methods();
+
+public:
+	Gwidi_HotKey();
+	~Gwidi_HotKey();
+
+	void beginListening();
+	void stopListening();
+
+	// These 2 methods can be used in combination to initiate listening / listing keys that are pressed from the moment we ask to the moment we retrieve the list
+	void clearPressedKeys();
+	void assignPressedKeyListener(Ref<FuncRef> cb);
+	Array pressedKeys();
+
+private:
+	gwidi::hotkey::GwidiHotkey* m_hotkeys{nullptr};
+	Ref<FuncRef> m_pressedKeyCb{nullptr};
+};
+
 
 #endif // GODOT_GWIDI_DATA_H

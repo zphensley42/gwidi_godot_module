@@ -422,6 +422,7 @@ void Gwidi_Gui_Playback::_bind_methods() {
 void Gwidi_Options::_bind_methods() {
   ClassDB::bind_method(D_METHOD("timesPerMeasure"), &Gwidi_Options::timesPerMeasure);
   ClassDB::bind_method(D_METHOD("tempo"), &Gwidi_Options::tempo);
+  ClassDB::bind_method(D_METHOD("assignHotkey"), &Gwidi_Options::assignHotkey);
 }
 
 
@@ -431,4 +432,64 @@ int Gwidi_Options::timesPerMeasure() {
 
 double Gwidi_Options::tempo() {
     return gwidi::options2::GwidiOptions2::getInstance().tempo();
+}
+
+void Gwidi_Options::assignHotkey(String name, Array keys) {
+	std::vector<int> kVec;
+	std::wstring name_wstr = name.c_str();
+	std::string name_str( name_wstr.begin(), name_wstr.end() );
+
+	for(auto i = 0; i < keys.size(); i++) {
+		auto &key = keys.get(i);
+		kVec.emplace_back(key);
+	}
+}
+
+Gwidi_HotKey::Gwidi_HotKey() {
+	m_hotkeys = new gwidi::hotkey::GwidiHotkey();
+}
+
+Gwidi_HotKey::~Gwidi_HotKey() {
+	delete m_hotkeys;
+	m_hotkeys = nullptr;
+}
+
+void Gwidi_HotKey::beginListening() {
+	m_hotkeys->beginListening();
+}
+void Gwidi_HotKey::stopListening() {
+	m_hotkeys->stopListening();
+}
+
+void Gwidi_HotKey::clearPressedKeys() {
+	m_hotkeys->clearPressedKeys();
+}
+Array Gwidi_HotKey::pressedKeys() {
+	Array ret{};
+	auto keys = m_hotkeys->pressedKeys();
+	for(auto &key : keys) {
+		Dictionary keyDict{};
+		keyDict["name"] = String(key.name.c_str());
+		keyDict["key"] = key.key;
+		ret.append(keyDict);
+	}
+	return ret;
+}
+
+void Gwidi_HotKey::assignPressedKeyListener(Ref<FuncRef> cb) {
+	m_pressedKeyCb = cb;
+	m_hotkeys->assignPressedKeyListener([this]() {
+		const Variant *args[] = {};
+		Variant::CallError err;
+		m_pressedKeyCb->call_func(args, 0, err);
+	});
+}
+
+void Gwidi_HotKey::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("beginListening"), &Gwidi_HotKey::beginListening);
+	ClassDB::bind_method(D_METHOD("stopListening"), &Gwidi_HotKey::stopListening);
+
+	ClassDB::bind_method(D_METHOD("clearPressedKeys"), &Gwidi_HotKey::clearPressedKeys);
+	ClassDB::bind_method(D_METHOD("assignPressedKeyListener"), &Gwidi_HotKey::assignPressedKeyListener);
+	ClassDB::bind_method(D_METHOD("pressedKeys"), &Gwidi_HotKey::pressedKeys);
 }

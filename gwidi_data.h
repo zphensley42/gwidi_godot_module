@@ -150,6 +150,8 @@ protected:
     static void _bind_methods();
 
   public:
+	Dictionary hotkeyMapping();
+
 	// User inputs hotkeys and presses okay to send this request
 	void assignHotkey(String name, Array keys);
 	void reloadConfig();
@@ -170,16 +172,33 @@ public:
 	void beginListening();
 	void stopListening();
 
-	// These 2 methods can be used in combination to initiate listening / listing keys that are pressed from the moment we ask to the moment we retrieve the list
-	void clearPressedKeys();
-	void assignPressedKeyListener(Ref<FuncRef> cb);
-	Array pressedKeys();
 	void assignHotkeyFunction(String hotkeyName, Ref<FuncRef> cb);
 
 private:
 	gwidi::hotkey::GwidiHotkey* m_hotkeys{nullptr};
-	Ref<FuncRef> m_pressedKeyCb{nullptr};
 	std::map<std::string, Ref<FuncRef>> m_assignedHotkeyFunctions;
+};
+
+class Gwidi_HotKeyAssignmentPressDetector : public Reference {
+	GDCLASS(Gwidi_HotKeyAssignmentPressDetector, Reference);
+protected:
+	static void _bind_methods();
+
+public:
+	Gwidi_HotKeyAssignmentPressDetector();
+	~Gwidi_HotKeyAssignmentPressDetector();
+
+	void beginListening();
+	void stopListening();
+
+	// These 2 methods can be used in combination to initiate listening / listing keys that are pressed from the moment we ask to the moment we retrieve the list
+	void clearPressedKeys();
+	void assignPressedKeyListener(Ref<FuncRef> cb);
+	Array pressedKeys();
+
+private:
+	gwidi::hotkey::GwidiHotkeyAssignmentPressDetector* m_hotkeyPressDetector{nullptr};
+	Ref<FuncRef> m_pressedKeyCb{nullptr};
 };
 
 

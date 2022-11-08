@@ -14,6 +14,7 @@ void register_gwidi_data_types() {
     ClassDB::register_class<Gwidi_Octave>();
     ClassDB::register_class<Gwidi_Note>();
     ClassDB::register_class<Gwidi_HotKey>();
+    ClassDB::register_class<Gwidi_HotKeyAssignmentPressDetector>();
 }
 
 void unregister_gwidi_data_types() {

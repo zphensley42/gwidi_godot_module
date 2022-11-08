@@ -150,10 +150,9 @@ protected:
     static void _bind_methods();
 
   public:
-  	Dictionary hotkeyOptions();	// Used to display options
-
 	// User inputs hotkeys and presses okay to send this request
 	void assignHotkey(String name, Array keys);
+	void reloadConfig();
 
     int timesPerMeasure();
     double tempo();
@@ -175,10 +174,12 @@ public:
 	void clearPressedKeys();
 	void assignPressedKeyListener(Ref<FuncRef> cb);
 	Array pressedKeys();
+	void assignHotkeyFunction(String hotkeyName, Ref<FuncRef> cb);
 
 private:
 	gwidi::hotkey::GwidiHotkey* m_hotkeys{nullptr};
 	Ref<FuncRef> m_pressedKeyCb{nullptr};
+	std::map<std::string, Ref<FuncRef>> m_assignedHotkeyFunctions;
 };
 
 

@@ -423,6 +423,7 @@ void Gwidi_Options::_bind_methods() {
   ClassDB::bind_method(D_METHOD("timesPerMeasure"), &Gwidi_Options::timesPerMeasure);
   ClassDB::bind_method(D_METHOD("tempo"), &Gwidi_Options::tempo);
   ClassDB::bind_method(D_METHOD("assignHotkey"), &Gwidi_Options::assignHotkey);
+  ClassDB::bind_method(D_METHOD("reloadConfig"), &Gwidi_Options::reloadConfig);
 }
 
 
@@ -443,6 +444,15 @@ void Gwidi_Options::assignHotkey(String name, Array keys) {
 		auto &key = keys.get(i);
 		kVec.emplace_back(key);
 	}
+
+	gwidi::options2::HotkeyOptions::HotKey hotkey;
+	hotkey.name = name_str;
+	hotkey.keys = kVec;
+	gwidi::options2::HotkeyOptions::getInstance().updateMapping(hotkey);
+}
+
+void Gwidi_Options::reloadConfig() {
+	gwidi::options2::HotkeyOptions::getInstance().reloadConfig();
 }
 
 Gwidi_HotKey::Gwidi_HotKey() {
@@ -474,6 +484,18 @@ Array Gwidi_HotKey::pressedKeys() {
 		ret.append(keyDict);
 	}
 	return ret;
+}
+
+void Gwidi_HotKey::assignHotkeyFunction(String hotkeyName, Ref<FuncRef> cb) {
+	std::wstring name_wstr = hotkeyName.c_str();
+	std::string name_str( name_wstr.begin(), name_wstr.end() );
+
+	m_assignedHotkeyFunctions[name_str] = cb;
+	m_hotkeys->assignHotkeyFunction(name_str, [this, name_str]() {
+		const Variant *args[] = {};
+		Variant::CallError err;
+		m_assignedHotkeyFunctions[name_str]->call_func(args, 0, err);
+	});
 }
 
 void Gwidi_HotKey::assignPressedKeyListener(Ref<FuncRef> cb) {

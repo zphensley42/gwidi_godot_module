@@ -138,7 +138,7 @@ void Gwidi_Measure::_bind_methods() {
 
 
 Gwidi_Gui_Data::Gwidi_Gui_Data() {
-  m_data = new gwidi::data::gui::GwidiGuiData(gwidi::data::gui::Instrument::HARP);
+  m_data = new gwidi::data::gui::GwidiGuiData();
 }
 
 Gwidi_Gui_Data::~Gwidi_Gui_Data() {
@@ -220,7 +220,7 @@ Array Gwidi_Midi_Parser::getTrackMetaMap(String filename) {
 
 
    gwidi::midi::MidiParseOptions options {
-     gwidi::midi::Instrument::HARP,
+     "default",
      track
    };
 

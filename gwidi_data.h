@@ -9,6 +9,7 @@
 #include "gwidi/GwidiPlayback.h"
 #include "gwidi/GwidiOptions2.h"
 #include "gwidi/gwidi_hotkey.h"
+#include "gwidi/GwidiServerClient.h"
 #include "core/array.h"
 #include <string_view>
 
@@ -152,6 +153,10 @@ protected:
   public:
 	Dictionary hotkeyMapping();
 
+	Dictionary instrumentConfig();
+	void addNewConfig(String configInstrumentName, Dictionary instrument);
+	void removeConfig(String configInstrumentName);
+
 	// User inputs hotkeys and presses okay to send this request
 	void assignHotkey(String name, Array keys);
 	void reloadConfig();
@@ -199,6 +204,37 @@ public:
 private:
 	gwidi::hotkey::GwidiHotkeyAssignmentPressDetector* m_hotkeyPressDetector{nullptr};
 	Ref<FuncRef> m_pressedKeyCb{nullptr};
+};
+
+class Gwidi_ServerClient : public Reference {
+	GDCLASS(Gwidi_ServerClient, Reference);
+protected:
+	static void _bind_methods();
+
+public:
+	Gwidi_ServerClient();
+	~Gwidi_ServerClient();
+
+	void start();
+	void stop();
+
+	void assignFocusChangeCallback(String cbName, Ref<FuncRef> cb);
+
+private:
+	std::shared_ptr<gwidi::udpsocket::GwidiServerListener> m_serverListener{nullptr};
+	Ref<FuncRef> m_focusChangeCb{nullptr};
+};
+
+class WStrConvert {
+public:
+	WStrConvert(String data) : m_wdata{data} {}
+	WStrConvert(std::string data) : m_sdata{data} {}
+
+	String toString();
+	std::string toStdString();
+private:
+	String m_wdata;
+	std::string m_sdata;
 };
 
 

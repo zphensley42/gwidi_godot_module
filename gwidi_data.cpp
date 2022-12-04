@@ -10,7 +10,7 @@
 Gwidi_Note::Gwidi_Note() {
 }
 Gwidi_Note::~Gwidi_Note() {
-  print_line("Gwidi_Note destroyed!");
+  // print_line("Gwidi_Note destroyed!");
 }
 
 void Gwidi_Note::init(gwidi::data::gui::Note* note) {
@@ -62,7 +62,7 @@ void Gwidi_Note::_bind_methods() {
 Gwidi_Octave::Gwidi_Octave() {
 }
 Gwidi_Octave::~Gwidi_Octave() {
-  print_line("Gwidi_Octave destroyed!");
+  // print_line("Gwidi_Octave destroyed!");
 }
 
 void Gwidi_Octave::init(gwidi::data::gui::Octave* octave) {
@@ -105,7 +105,7 @@ Gwidi_Measure::Gwidi_Measure() {
 }
 
 Gwidi_Measure::~Gwidi_Measure() {
-  print_line("Gwidi_Measure destroyed!");
+  // print_line("Gwidi_Measure destroyed!");
 }
 
 void Gwidi_Measure::init(gwidi::data::gui::Measure* measure) {
@@ -425,6 +425,89 @@ void Gwidi_Options::_bind_methods() {
   ClassDB::bind_method(D_METHOD("tempo"), &Gwidi_Options::tempo);
   ClassDB::bind_method(D_METHOD("assignHotkey"), &Gwidi_Options::assignHotkey);
   ClassDB::bind_method(D_METHOD("reloadConfig"), &Gwidi_Options::reloadConfig);
+  ClassDB::bind_method(D_METHOD("instrumentConfig"), &Gwidi_Options::instrumentConfig);
+  ClassDB::bind_method(D_METHOD("addNewConfig"), &Gwidi_Options::addNewConfig);
+  ClassDB::bind_method(D_METHOD("removeConfig"), &Gwidi_Options::removeConfig);
+}
+
+Dictionary Gwidi_Options::instrumentConfig() {
+	Dictionary ret{};
+	auto &instance = gwidi::options2::GwidiOptions2::getInstance();
+	auto &mapping = instance.getMapping();
+
+	for(auto &entry : mapping) {
+		auto instrumentName = entry.first;
+		auto &instrument = entry.second;
+
+		Dictionary instrumentDict;
+		instrumentDict["supports_held_notes"] = instrument.supports_held_notes;
+		instrumentDict["starting_octave"] = instrument.starting_octave;
+
+		Array octaves;
+		for(auto &octave : instrument.octaves) {
+			Dictionary octaveDict;
+			octaveDict["num"] = octave.num;
+
+			Array notes;
+			for(auto &note : octave.notes) {
+				Dictionary noteDict;
+				noteDict["key"] = String(note.key.c_str());
+				noteDict["midi_octave"] = note.midi_octave;
+
+				Array letters;
+				for(auto &letter : note.letters) {
+					letters.append(String(letter.c_str()));
+				}
+				noteDict["letters"] = letters;
+
+				notes.append(noteDict);
+			}
+			octaveDict["notes"] = notes;
+
+			octaves.append(octaveDict);
+		}
+		instrumentDict["octaves"] = octaves;
+
+		ret[String(instrumentName.c_str())] = instrumentDict;
+	}
+
+	return ret;
+}
+void Gwidi_Options::addNewConfig(String configInstrumentName, Dictionary instrument) {
+	auto stdCfgInstrName = WStrConvert(configInstrumentName).toStdString();
+	gwidi::options2::Instrument toAdd;
+
+	// Convert the dict to the instrument object
+	toAdd.starting_octave = instrument["starting_octave"];
+	toAdd.supports_held_notes = instrument["supports_held_notes"];
+	auto octavesArr = (Array)instrument["octaves"];
+	for(auto o = 0; o < octavesArr.size(); o++) {
+		auto octave = (Dictionary)octavesArr[o];
+		gwidi::options2::Octave octaveToAdd;
+		octaveToAdd.num = octave["num"];
+
+		auto notesArr = (Array)octave["notes"];
+		for(auto n = 0; n < notesArr.size(); n++) {
+			auto note = (Dictionary)notesArr[n];
+			gwidi::options2::Note noteToAdd;
+			noteToAdd.key = WStrConvert(note["key"]).toStdString();
+			noteToAdd.midi_octave = note["midi_octave"];
+
+			auto lettersArr = (Array)note["letters"];
+			for(auto l = 0; l < lettersArr.size(); l++) {
+				auto letter = (String)lettersArr[l];
+				noteToAdd.letters.emplace_back(WStrConvert(letter).toStdString());
+			}
+			octaveToAdd.notes.emplace_back(noteToAdd);
+		}
+		toAdd.octaves.emplace_back(octaveToAdd);
+	}
+
+	gwidi::options2::GwidiOptions2::getInstance().addNewConfig(stdCfgInstrName, toAdd);
+}
+void Gwidi_Options::removeConfig(String configInstrumentName) {
+	auto stdCfgInstrName = WStrConvert(configInstrumentName).toStdString();
+	gwidi::options2::GwidiOptions2::getInstance().removeConfig(stdCfgInstrName);
 }
 
 Dictionary Gwidi_Options::hotkeyMapping() {
@@ -500,7 +583,8 @@ void Gwidi_HotKey::assignHotkeyFunction(String hotkeyName, Ref<FuncRef> cb) {
 	m_hotkeys->assignHotkeyFunction(name_str, [this, name_str]() {
 		const Variant *args[] = {};
 		Variant::CallError err;
-		m_assignedHotkeyFunctions[name_str]->call_func(args, 0, err);
+		auto hotkeyCb = m_assignedHotkeyFunctions[name_str];
+		hotkeyCb->call_func(args, 0, err);
 	});
 }
 
@@ -560,4 +644,56 @@ void Gwidi_HotKeyAssignmentPressDetector::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("clearPressedKeys"), &Gwidi_HotKeyAssignmentPressDetector::clearPressedKeys);
 	ClassDB::bind_method(D_METHOD("assignPressedKeyListener"), &Gwidi_HotKeyAssignmentPressDetector::assignPressedKeyListener);
 	ClassDB::bind_method(D_METHOD("pressedKeys"), &Gwidi_HotKeyAssignmentPressDetector::pressedKeys);
+}
+
+
+
+void Gwidi_ServerClient::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("start"), &Gwidi_ServerClient::start);
+	ClassDB::bind_method(D_METHOD("stop"), &Gwidi_ServerClient::stop);
+	ClassDB::bind_method(D_METHOD("assignFocusChangeCallback"), &Gwidi_ServerClient::assignFocusChangeCallback);
+}
+
+Gwidi_ServerClient::Gwidi_ServerClient() {
+	m_serverListener = gwidi::udpsocket::GwidiServerClientManager::instance().serverListener();
+}
+Gwidi_ServerClient::~Gwidi_ServerClient() {
+	m_serverListener = nullptr;
+}
+
+void Gwidi_ServerClient::start() {
+	m_serverListener->start();
+
+	// Use all keys (for now) -- maybe change this when doing hotkeys specifically instead of all keys for assignment detection?
+	m_serverListener->sendWatchedKeysReconfig({});
+}
+void Gwidi_ServerClient::stop() {
+	m_serverListener->stop();
+}
+void Gwidi_ServerClient::assignFocusChangeCallback(String cbName, Ref<FuncRef> cb) {
+	WStrConvert cbNameWStr(cbName);
+
+	m_focusChangeCb = cb;
+	m_serverListener->addEventCb(cbNameWStr.toStdString(), [this](gwidi::udpsocket::ServerEventType type, gwidi::udpsocket::ServerEvent event) {
+	  if(type == gwidi::udpsocket::ServerEventType::EVENT_FOCUS) {
+		  WStrConvert windowName(std::string{event.focusEvent.windowName});
+		  Variant windowNameVariant{windowName.toString()};
+		  Variant hasFocusVariant{event.focusEvent.hasFocus};
+		  const Variant *args[2] = {&windowNameVariant, &hasFocusVariant};
+		  Variant::CallError err;
+		  m_focusChangeCb->call_func(args, 2, err);
+	  }
+	});
+}
+
+
+
+String WStrConvert::toString() {
+	String wstr = String(m_sdata.c_str());
+	return wstr;
+}
+std::string WStrConvert::toStdString() {
+	std::wstring wstr = m_wdata.c_str();
+	std::string stdstr( wstr.begin(), wstr.end() );
+	return stdstr;
 }
